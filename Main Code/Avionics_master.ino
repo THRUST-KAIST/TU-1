@@ -78,7 +78,7 @@ void loop(){
     }
     */
   }
-  
+  /*
   if (Serialgps.available() > 0){
     int c = Serialgps.read();
     if(gps.encode(c)){
@@ -89,5 +89,6 @@ void loop(){
       Serial.println(gps.time.second());
     }
   }
+  */
   Serial.println(analogRead(A1));
 }
