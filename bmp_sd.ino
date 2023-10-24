@@ -26,6 +26,10 @@ File myFile;
 Adafruit_BMP280 bmp; // I2C
 int pasttime = 0;
 
+float temperature;
+float pressure;
+float altitude;
+
 
 void setup() {
   Serial.begin(9600);
@@ -57,45 +61,49 @@ void setup() {
     while (1);
   }
   Serial.println("SD initialization done.");
-  myFile = SD.open("bmpc123.txt", FILE_WRITE);
+  myFile = SD.open("bmp.txt", FILE_WRITE);
+  SD.remove("bmp.txt");
+
+  myFile = SD.open("bmp.txt", FILE_WRITE);
+  myFile.println("Time, Temperature, Pressure, Altitude");
   myFile.close();
 }
 
 void loop() {
-  int nowtime = millis();
-    // bmp.readTemperature();
-    // bmp.readPressure();
-    // bmp.readAltitude();
-    // Serial.print(F("Temperature = "));
-    // Serial.print(bmp.readTemperature());
-    // Serial.println(" *C");
+  // int nowtime = millis();
+    temperature = bmp.readTemperature();
+    pressure = bmp.readPressure();
+    altitude = bmp.readAltitude();
+    Serial.print(F("Temperature = "));
+    Serial.print(String(temperature));
+    Serial.println(" *C");
 
-    // Serial.print(F("Pressure = "));
-    // Serial.print(bmp.readPressure());
-    // Serial.println(" Pa");
+    Serial.print(F("Pressure = "));
+    Serial.print(String(pressure));
+    Serial.println(" Pa");
 
-    // Serial.print(F("Approx altitude = "));
-    // Serial.print(bmp.readAltitude(1013.25)); /* Adjusted to local forecast! */
-    // Serial.println(" m");
+    Serial.print(F("Approx altitude = "));
+    Serial.print(String(altitude)); /* Adjusted to local forecast! */
+    Serial.println(" m");
 
-    myFile = SD.open("bmpc123.txt", FILE_WRITE);
+    myFile = SD.open("bmp.txt", FILE_WRITE);
     if(myFile){
-      myFile.print(F("Temperature = "));
-      myFile.print(bmp.readTemperature());
-      myFile.println(" *C");
-      myFile.print(F("Pressure = "));
-      myFile.print(bmp.readPressure());
-      myFile.println(" Pa");
-      myFile.print(F("Approx altitude = "));
-      myFile.print(bmp.readAltitude(1013.25));
-      myFile.println(" m");
+
+      myFile.print(String(millis()));
+      myFile.print(", ");
+      myFile.print((String(temperature)));
+      myFile.print(", ");
+      myFile.print(String(pressure));
+      myFile.print(", ");
+      myFile.println(String(altitude));
+
       myFile.close();
     }else{
       Serial.println("sd card error");
     }
 
-    Serial.println(nowtime - pasttime);
-    pasttime = nowtime;
-    Serial.println();
+    // Serial.println(nowtime - pasttime);
+    // pasttime = nowtime;
+    // Serial.println();
     
 }
