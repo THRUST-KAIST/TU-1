@@ -53,7 +53,10 @@ void setup() {
     Serial.println("error");
   }
   myFile = SD.open("rectest2.txt", FILE_WRITE);
-  myFile.println("magX, magY, magZ");
+  SD.remove("rectest2.txt");
+
+  myFile = SD.open("rectest2.txt", FILE_WRITE);
+  myFile.println("Time, magX, magY, magZ");
   myFile.close();
 }
 
@@ -74,6 +77,8 @@ void loop() {
       mY = mySensor.magY();
       mZ = mySensor.magZ();
       mDirection = mySensor.magHorizDirection();
+      myFile.print(String(millis()));
+      myFile.print(", ");
       Serial.println("magX: " + String(mX));
       myFile.print(String(mX));
       myFile.print(", ");
