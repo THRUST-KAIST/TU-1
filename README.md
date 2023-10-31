@@ -10,7 +10,7 @@ hyperparameter
     Avionics
     - GPS data file : gps1.txt
     - BMP data file : bmp1.txt
-    Recovdery
+    Recovery
     - pt sensor limitation : 2 bar
     - pitch limitation : over 100
     - delay time : 20sec (For the stability of mpu9250)
