@@ -1,0 +1,205 @@
+#include <TinyGPS++.h>
+#include <SoftwareSerial.h>
+/*
+   This sample sketch demonstrates the normal use of a TinyGPS++ (TinyGPSPlus) object.
+   It requires the use of SoftwareSerial, and assumes that you have a
+   9600-baud serial GPS device hooked up on pins 4(rx) and 3(tx).
+*/
+static const int RXPin = 3, TXPin = 2;
+static const uint32_t GPSBaud = 9600;
+
+// The TinyGPS++ object
+TinyGPSPlus gps;
+
+// The serial connection to the GPS device
+SoftwareSerial ss(RXPin, TXPin);
+
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_BMP280.h>
+#include <SD.h>
+
+File myFile;
+
+#define BMP280_ADDRESS 0x76
+Adafruit_BMP280 bmp; // I2C
+int pasttime = 0;
+
+float temperature;
+float pressure;
+float altitude;
+
+void setup()
+{
+  Serial.begin(9600);
+
+  if (!SD.begin(6)) {
+    Serial.println("SD initialization failed!");
+    while (1);
+  }
+  Serial.println("SD initialization done.");
+
+  // myFile = SD.open("gps.txt", FILE_WRITE);
+  // SD.remove("gps.txt");
+  //myFile = SD.open("gps.txt", FILE_WRITE);
+  //myFile.println("Time, Latitude, Longitude, GPStime");
+  //myFile.close();
+
+  ss.begin(GPSBaud);
+
+
+
+  Serial.println(F("BMP280 test"));
+  unsigned status;
+  status = bmp.begin(BMP280_ADDRESS);
+  // if (!status) {
+  //   Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
+  //                     "try a different address!"));
+  //   Serial.print("SensorID was: 0x"); Serial.println(bmp.sensorID(),16);
+  //   Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
+  //   Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
+  //   Serial.print("        ID of 0x60 represents a BME 280.\n");
+  //   Serial.print("        ID of 0x61 represents a BME 680.\n");
+  //   while (1) delay(10);
+  // }else{
+  //   Serial.println(F("BMP280 test success"));
+  // }
+
+  /* Default settings from datasheet. */
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+  
+  // myFile = SD.open("gps_bmp.txt", FILE_WRITE);
+  // SD.remove("gps_bmp.txt");
+
+  myFile = SD.open("gps1.txt", FILE_WRITE);
+  myFile.println("Time, Latitude, Longitude, GPStime");
+  myFile.close();
+
+  myFile = SD.open("bmp1.txt", FILE_WRITE);
+  myFile.println("Time, Temperature, Pressure, Altitude");
+  myFile.close();
+  
+}
+
+void loop()
+{
+  // This sketch displays information every time a new sentence is correctly encoded.
+  
+
+    temperature = bmp.readTemperature();
+    pressure = bmp.readPressure();
+    altitude = bmp.readAltitude();
+    Serial.print(F("Temperature = "));
+    Serial.print(String(temperature));
+    Serial.println(" *C");
+
+    Serial.print(F("Pressure = "));
+    Serial.print(String(pressure));
+    Serial.println(" Pa");
+
+    Serial.print(F("Approx altitude = "));
+    Serial.print(String(altitude)); /* Adjusted to local forecast! */
+    Serial.println(" m");
+
+
+    myFile = SD.open("bmp1.txt", FILE_WRITE);
+    if(myFile){
+
+      myFile.print(String(millis()));
+      myFile.print(", ");
+      myFile.print((String(temperature)));
+      myFile.print(", ");
+      myFile.print(String(pressure));
+      myFile.print(", ");
+      myFile.println(String(altitude));
+
+      myFile.close();
+    }else{
+      Serial.println("sd card error");
+    }
+
+    while (ss.available() > 0)
+    if (gps.encode(ss.read()))
+      displayInfo();
+
+  if (millis() > 5000 && gps.charsProcessed() < 10)
+  {
+    Serial.println(F("No GPS detected: check wiring."));
+    while(true);
+  }
+}
+
+void displayInfo()
+{
+  Serial.print(F("Location: ")); 
+ // if (gps.location.isValid())
+ // {
+    Serial.print(gps.location.lat(), 6);
+    Serial.print(F(","));
+    Serial.print(gps.location.lng(), 6);
+
+
+    myFile = SD.open("gps1.txt", FILE_WRITE);
+    myFile.print(String(millis()));
+    myFile.print(", ");
+    myFile.print(String(gps.location.lat(), 6));
+    myFile.print(", ");
+    myFile.print(String(gps.location.lng(), 6));
+    
+ // }
+ // else
+ // {
+ //   Serial.print(F("INVALID"));
+ // }
+
+  Serial.print(F("  Date/Time: "));
+  if (gps.date.isValid())
+  {
+    Serial.print(gps.date.month());
+    Serial.print(F("/"));
+    Serial.print(gps.date.day());
+    Serial.print(F("/"));
+    Serial.print(gps.date.year());
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+  }
+
+  Serial.print(F(" "));
+  if (gps.time.isValid())
+  {
+    if (gps.time.hour() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.hour());
+    Serial.print(F(":"));
+    if (gps.time.minute() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.minute());
+    Serial.print(F(":"));
+    if (gps.time.second() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.second());
+    Serial.print(F("."));
+    if (gps.time.centisecond() < 10) Serial.print(F("0"));
+    Serial.print(gps.time.centisecond());
+
+    myFile.print(", ");
+    myFile.print(gps.time.hour());
+    myFile.print(F(":"));
+    myFile.print(gps.time.minute());
+    myFile.print(F(":"));
+    myFile.print(gps.time.second());
+    myFile.print(F("."));
+    myFile.println(gps.time.centisecond());
+  }
+  else
+  {
+    Serial.print(F("INVALID"));
+    myFile.print(", ");
+    myFile.println("?");
+  }
+  myFile.close();
+
+  Serial.println();  }
